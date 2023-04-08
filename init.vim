@@ -2,48 +2,60 @@ set encoding=utf-8
 set nobackup
 set nowritebackup
 set updatetime=300
+syntax on
 filetype plugin indent on
+set termguicolors
 set number
 set noswapfile
 set signcolumn=yes
-syntax on
-
-let g:python3_host_prog='/data/data/com.termux/files/usr/bin/python3'
+let g:python3_host_prog='/usr/bin/python3'
 let $PYTHONUNBUFFERED=1
 let mapleader=' '
 
 call plug#begin()
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
+Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
 Plug 'preservim/nerdtree'
 Plug 'skywind3000/asyncrun.vim'
 Plug 'windwp/nvim-autopairs'
 Plug 'one-dark/onedark.nvim'
 call plug#end()
 
+let g:onedark_terminal_italics=1
+let g:onedark_terminal_bold=1
 colorscheme onedark
+
 vnoremap <silent> # :s/^/#/<CR>:noh<CR>
 nnoremap <leader>, :nohlsearch<CR>
 nnoremap <leader>e :NERDTreeToggle<CR>
-nnoremap <leader>0 :copen<CR><C-w>p:AsyncRun -cwd=$(VIM_FILEDIR) python3 "$(VIM_FILEPATH)"<CR><CR>
+nnoremap <F9> :copen<CR><C-w>p:AsyncRun -cwd=$(VIM_FILEDIR) python3 "$(VIM_FILEPATH)"<CR><CR>
+nnoremap <F10> :copen<CR><C-w>p:AsyncRun -cwd=$(VIM_ROOT) python3 "main.py"<CR><CR>
+
 
 augroup qf
   autocmd!
-  autocmd FileType qf nnoremap <buffer> q :if &buftype ==# 'quickfix' \| cclose \| else \| q \| endif<CR><CR>
+  autocmd FileType qf nnoremap <buffer> q :if &buftype ==# 'quickfix' \| cclose \| else \| q \| endif<CR><CR> 
 augroup END
 
-" Use tab for trigger completion with characters ahead and navigate
-" NOTE: There's always complete item selected by default, you may want to enable
-" no select by `"suggest.noselect": true` in your configuration file
-" NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
-" other plugin before putting this into your config
+
+function! AsyncrunStop()
+  if exists("g:asyncrun_status") && g:asyncrun_status == 'running'
+    execute "AsyncStop"
+  endif
+endfunction
+nnoremap <BS> :call AsyncrunStop()<CR>
+
+
+
 inoremap <silent><expr> <TAB>
       \ coc#pum#visible() ? coc#pum#next(1) :
       \ CheckBackspace() ? "\<Tab>" :
       \ coc#refresh()
 inoremap <expr><S-TAB> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
 
-" Make <CR> to accept selected completion item or notify coc.nvim to format
-" <C-g>u breaks current undo, please make your own choice
+
+
 inoremap <silent><expr> <CR> coc#pum#visible() ? coc#pum#confirm()
                               \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
 
@@ -52,25 +64,22 @@ function! CheckBackspace() abort
   return !col || getline('.')[col - 1]  =~# '\s'
 endfunction
 
-" Use <c-space> to trigger completion
+
 if has('nvim')
   inoremap <silent><expr> <c-space> coc#refresh()
 else
   inoremap <silent><expr> <c-@> coc#refresh()
 endif
 
-" Use `[g` and `]g` to navigate diagnostics
-" Use `:CocDiagnostics` to get all diagnostics of current buffer in location list
+
+
 nmap <silent> [g <Plug>(coc-diagnostic-prev)
 nmap <silent> ]g <Plug>(coc-diagnostic-next)
-
-" GoTo code navigation
 nmap <silent> gd <Plug>(coc-definition)
 nmap <silent> gy <Plug>(coc-type-definition)
 nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
 
-" Use K to show documentation in preview window
 nnoremap <silent> K :call ShowDocumentation()<CR>
 
 function! ShowDocumentation()
@@ -81,8 +90,19 @@ function! ShowDocumentation()
   endif
 endfunction
 
-" Highlight the symbol and its references when holding the cursor
-autocmd CursorHold * silent call CocActionAsync('highlight')
 
-" Symbol renaming
+autocmd CursorHold * silent call CocActionAsync('highlight')
+autocmd BufRead,BufNewFile *.py let python_highlight_all=1
+
+augroup python_syntax_extra
+  autocmd!
+  autocmd! Syntax python :syn keyword pythonSelf self
+  autocmd! Syntax python :syn keyword pythonCls cls
+augroup END
+highlight pythonSelf ctermfg=4 guifg=#56b6c2
+highlight pythonSelf ctermfg=4 guifg=#56b6c2
 nmap <leader>rn <Plug>(coc-rename)
+
+lua << EOF
+require("nvim-autopairs").setup {}
+EOF

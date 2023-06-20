@@ -1,0 +1,11 @@
+
+alias ls='ls --color=auto'
+alias grep='grep --color=auto'
+alias r="source ~/.bash_profile"
+alias untar="tar -zxvf"
+alias del="rm -rf"
+alias c="clear"
+alias l="ls -aF --color=auto"
+alias ll="ls -alF --color=auto"
+cd() { builtin cd "$@" && l && pwd; }
+alias ..='cd ..'
